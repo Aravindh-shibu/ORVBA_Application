@@ -1,22 +1,16 @@
 from django.db import models
-from django.db.models.signals import post_save
+from django.contrib.auth.models import User
+
 # Create your models here.
 
-class User(models.Model):
-    username=models.CharField(max_length=200)
-    password=models.CharField(max_length=200)
-    email=models.EmailField()
-    is_active=models.BooleanField(default=True)
-    date_joined=models.DateField(auto_now_add=True,null=True)
-    options=(
-        ("admin","admin"),
-        ("user","user"),
-        ("mechanic","mechanic")
+
+class User(User):
+    options = (
+        ("user", "user"),
+        ("mechanic", "mechanic")
     )
-    user_type=models.CharField(max_length=200,choices=options,default="user")
-    
-    def _str_(self):
-        return self.username
+    user_type = models.CharField(max_length=200, choices=options, default="user")
+
 
 class Location(models.Model):
     name=models.CharField(max_length=200)
@@ -82,6 +76,7 @@ class RentCar(models.Model):
         return self.name
 
 class ReqToMechanic(models.Model):
+    
     user=models.ForeignKey(UserProfile,on_delete=models.CASCADE,related_name="req_profile")
     mechanic=models.ForeignKey(MechanicProfile,on_delete=models.CASCADE,related_name="req_profile")
     discription=models.CharField(max_length=200)
@@ -89,19 +84,3 @@ class ReqToMechanic(models.Model):
     location=models.ForeignKey(Location,on_delete=models.CASCADE,related_name="req_location")
 
     
-# def create_profile(sender,created,instance,**kwargs):
-#      if created:
-#         UserProfile.objects.create(user=instance)
-#         print("profile obj creadted")
-# post_save.connect(create_profile,sender=User)
-
-def create_profile(sender, instance, created, **kwargs):
-    if created and instance.user_type == "mechanic":
-        MechanicProfile.objects.create(user=instance)
-        print("MechanicProfile object created for user:", instance.username)
-
-    if created and instance.user_type == "user":
-        UserProfile.objects.create(user=instance)
-        print("user object created for user:", instance.username)
-        
-post_save.connect(create_profile,sender=User)
